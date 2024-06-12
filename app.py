@@ -25,8 +25,7 @@ SCALER_PATH = 'models/scaler.pkl'
 
 
 def load_data():
-    df = pd.read_sql_table('region', engine)
-    return df
+    return pd.read_sql_table('region', engine).sort_values(by=['id'])
 
 
 def calculate_investment_and_reason(df):
@@ -163,4 +162,4 @@ def predict():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)

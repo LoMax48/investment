@@ -15,6 +15,7 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 CREATE TABLE public.region (
+    id SERIAL PRIMARY KEY,
     name CHARACTER VARYING(255) NOT NULL,
     population FLOAT NOT NULL,
     unemployment FLOAT NOT NULL,
