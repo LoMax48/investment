@@ -33,7 +33,8 @@ CREATE TABLE public.region (
     vrp_2018 FLOAT NOT NULL,
     vrp_2019 FLOAT NOT NULL,
     investment_msu FLOAT NOT NULL,
-    result FLOAT DEFAULT NULL
+    result FLOAT DEFAULT NULL,
+    reason CHARACTER VARYING(255) DEFAULT NULL
 );
 
 ALTER TABLE public.region OWNER TO current_user;
