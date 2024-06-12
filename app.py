@@ -29,7 +29,7 @@ def load_data():
     return df
 
 
-def train_models(df):
+def calculate_investment_and_reason(df):
     years = np.array([2014, 2015, 2016, 2017, 2018, 2019]).reshape(-1, 1)
     vrp_columns = ['vrp_2014', 'vrp_2015', 'vrp_2016', 'vrp_2017', 'vrp_2018', 'vrp_2019']
 
@@ -52,11 +52,9 @@ def train_models(df):
         df.at[index, 'vrp_2023'] = vrp_2023[0, 0] / df.at[index, 'population']
 
     x = df.drop(columns=['vrp_2014', 'vrp_2015', 'vrp_2016', 'vrp_2017', 'vrp_2018', 'vrp_2019', 'population',
-                         'id', 'name', 'investment_msu', 'result', 'reason'], axis=1)
+                         'id', 'name', 'investment_msu', 'result', 'reason'], axis=1).rename(str, axis='columns')
 
     y = df['investment_msu'].apply(lambda x: 7 if x > 7 else x)
-
-    x = x.rename(str, axis='columns')
 
     # Разделение данных на обучающие и тестовые наборы
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=48)
@@ -110,22 +108,41 @@ def explain_prediction(features, current_class, decision_tree, standard_scaler, 
 
             if feature_value <= threshold_value:
                 if decision_tree.classes_[np.argmax(decision_tree.tree_.value[node_id])] > current_class - 1:
-                    explanation.append(f"{feature_name} should be > {threshold_value}")
+                    explanation.append(f"повышение {process_feature_name(feature_name)}")
             else:
                 if decision_tree.classes_[np.argmax(decision_tree.tree_.value[node_id])] > current_class - 1:
-                    explanation.append(f"{feature_name} should be <= {threshold_value}")
+                    explanation.append(f"понижение {process_feature_name(feature_name)}")
 
-    return ", ".join(explanation)
+    return 'Требуется ' + ', '.join(explanation)
 
 
-def format_reason(reason):
-    return reason
+def process_feature_name(feature_name):
+    if feature_name == 'unemployment':
+        return 'уровня безработицы'
+    if feature_name == 'employment':
+        return 'уровня занятости'
+    if feature_name == 'potential_labor_force':
+        return 'потенциальной рабочей силы'
+    if feature_name == 'salary':
+        return 'средней заработной платы'
+    if feature_name == 'education_school':
+        return 'уровня школьного образования'
+    if feature_name == 'education_high':
+        return 'доли работников с высшим образованием'
+    if feature_name == 'crimes':
+        return 'уровня преступности'
+    if feature_name == 'life_quality':
+        return 'качества жизни'
+    if feature_name == 'house_afford':
+        return 'доступности жилья'
+    if feature_name == 'vrp_2023':
+        return 'внутреннего валового продукта'
 
 
 # Проверка, существует ли сохранённая модель
 if not os.path.exists(MLP_PATH) or not os.path.exists(SCALER_PATH):
     data = load_data()
-    scaler, mlp, dt = train_models(data)
+    scaler, mlp, dt = calculate_investment_and_reason(data)
 else:
     scaler = joblib.load(SCALER_PATH)
     mlp = joblib.load(MLP_PATH)
@@ -135,6 +152,7 @@ else:
 @app.route('/')
 @app.route('/home')
 def index():
+    regions_data = load_data().to_dict(orient='records')
     return 'hello world'
     return render_template('index.html', data=json.dumps(regions_data))
 
