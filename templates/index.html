@@ -1,22 +1,43 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Investment Attractiveness Map</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% extends 'base.html' %}
+
+{% block title %}Инвестиционная привлекательность регионов{% endblock %}
+{% block body %}
+    <div id="tooltip" class="tooltip"></div>
+    <svg id="map" width="1000" height="800"></svg>
     <script src="https://d3js.org/d3.v6.min.js"></script>
-    <script src="https://d3js.org/topojson.v1.min.js"></script>
-</head>
-<body>
-    <div id="map"></div>
-    <div id="tooltip" class="hidden">
-        <p><strong>Region:</strong> <span id="region-name"></span></p>
-        <p><strong>Investment Score:</strong> <span id="investment-score"></span></p>
-        <p><strong>Reason:</strong> <span id="investment-reason"></span></p>
-    </div>
     <script>
-        var data = {{ data|safe }};
+        document.addEventListener("DOMContentLoaded", function() {
+            const regions = {{ regions|tojson }};
+            const svg = d3.select("#map");
+            const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([7, 1]);
+
+            regions.forEach(region => {
+                // TODO: убрать это условие после нахождения полигонов для Липецкой области и Крыма
+                if (region.polygon == null) return;
+
+                const coords = region.polygon.split(',').map(Number);
+                const polygonPoints = [];
+                for (let i = 0; i < coords.length; i += 2) {
+                    polygonPoints.push([coords[i], coords[i + 1]]);
+                }
+                svg.append("polygon")
+                    .attr("points", polygonPoints.join(" "))
+                    .attr("class", "region")
+                    .attr("fill", colorScale(region.result))
+                    .on("mouseover", function(event) {
+                        const tooltip = d3.select("#tooltip");
+                        tooltip.style("display", "block")
+                            .html(`<strong>${region[0]}</strong><br>Класс: ${region.result}<br>Причина: ${region.reason}`);
+                    })
+                    .on("mousemove", function(event) {
+                        d3.select("#tooltip")
+                            .style("left", (event.pageX + 10) + "px")
+                            .style("top", (event.pageY + 10) + "px");
+                    })
+                    .on("mouseout", function() {
+                        d3.select("#tooltip").style("display", "none");
+                    });
+            });
+        });
     </script>
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+{% endblock %}

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, url_for
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
@@ -151,14 +151,13 @@ else:
 @app.route('/')
 @app.route('/home')
 def index():
-    regions_data = load_data().to_dict(orient='records')
-    return 'hello world'
-    return render_template('index.html', data=json.dumps(regions_data))
+    regions = load_data().to_dict(orient='records')
+    return render_template('index.html', regions=regions)
 
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    return 'hello world'
+    return 'hello predict'
 
 
 if __name__ == '__main__':
