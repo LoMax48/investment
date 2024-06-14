@@ -1,20 +1,16 @@
-body {
-    font-family: Arial, sans-serif;
-}
-
-#map {
-    width: 800px;
-    height: 600px;
+path {
+    stroke: #000;
+    stroke-width: 0.5;
+    fill-opacity: 0.7;
 }
 
 #tooltip {
     position: absolute;
-    background-color: white;
-    border: 1px solid #ccc;
+    text-align: center;
     padding: 10px;
+    background: lightgray;
+    border: 1px solid black;
+    border-radius: 5px;
     pointer-events: none;
-}
-
-.hidden {
     display: none;
 }

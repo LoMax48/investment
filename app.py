@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, url_for
+from flask import Flask, render_template
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
@@ -9,7 +9,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 import joblib
-import json
 import os
 
 app = Flask(__name__)
@@ -51,7 +50,7 @@ def calculate_investment_and_reason(df):
         df.at[index, 'vrp_2023'] = vrp_2023[0, 0] / df.at[index, 'population']
 
     x = df.drop(columns=['vrp_2014', 'vrp_2015', 'vrp_2016', 'vrp_2017', 'vrp_2018', 'vrp_2019', 'population',
-                         'id', 'name', 'investment_msu', 'result', 'reason'], axis=1).rename(str, axis='columns')
+                         'id', 'name', 'investment_msu', 'result', 'reason', 'polygon'], axis=1).rename(str, axis='columns')
 
     y = df['investment_msu'].apply(lambda x: 7 if x > 7 else x)
 
@@ -135,7 +134,7 @@ def process_feature_name(feature_name):
     if feature_name == 'house_afford':
         return 'доступности жилья'
     if feature_name == 'vrp_2023':
-        return 'внутреннего валового продукта'
+        return 'внутреннего регионального продукта'
 
 
 # Проверка, существует ли сохранённая модель
@@ -152,7 +151,7 @@ else:
 @app.route('/home')
 def index():
     regions = load_data().to_dict(orient='records')
-    return render_template('index.html', regions=regions)
+    return render_template('new_index.html', regions=regions)
 
 
 @app.route('/predict', methods=['POST'])
@@ -161,4 +160,4 @@ def predict():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
