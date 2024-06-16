@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_file, request, jsonify
 import pandas as pd
 import numpy as np
 from sqlalchemy import create_engine
@@ -10,6 +10,8 @@ from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 import joblib
 import os
+import openpyxl
+from io import BytesIO
 
 app = Flask(__name__)
 
@@ -27,7 +29,7 @@ def load_data():
     return pd.read_sql_table('region', engine).sort_values(by=['id'])
 
 
-def calculate_investment_and_reason(df):
+def save_models(df):
     years = np.array([2014, 2015, 2016, 2017, 2018, 2019]).reshape(-1, 1)
     vrp_columns = ['vrp_2014', 'vrp_2015', 'vrp_2016', 'vrp_2017', 'vrp_2018', 'vrp_2019']
 
@@ -115,32 +117,24 @@ def explain_prediction(features, current_class, decision_tree, standard_scaler, 
 
 
 def process_feature_name(feature_name):
-    if feature_name == 'unemployment':
-        return 'уровня безработицы'
-    if feature_name == 'employment':
-        return 'уровня занятости'
-    if feature_name == 'potential_labor_force':
-        return 'потенциальной рабочей силы'
-    if feature_name == 'salary':
-        return 'средней заработной платы'
-    if feature_name == 'education_school':
-        return 'уровня школьного образования'
-    if feature_name == 'education_high':
-        return 'доли работников с высшим образованием'
-    if feature_name == 'crimes':
-        return 'уровня преступности'
-    if feature_name == 'life_quality':
-        return 'качества жизни'
-    if feature_name == 'house_afford':
-        return 'доступности жилья'
-    if feature_name == 'vrp_2023':
-        return 'внутреннего регионального продукта'
+    return {
+        'unemployment': 'уровня безработицы',
+        'employment': 'уровня занятости',
+        'potential_labor_force': 'потенциальной рабочей силы',
+        'salary': 'средней заработной платы',
+        'education_school': 'уровня школьного образования',
+        'education_high': 'доли работников с высшим образованием',
+        'crimes': 'уровня преступности',
+        'life_quality': 'качества жизни',
+        'house_afford': 'доступности жилья',
+        'vrp_2023': 'внутреннего регионального продукта',
+        'population': 'населения'
+    }[feature_name]
 
 
 # Проверка, существует ли сохранённая модель
-if not os.path.exists(MLP_PATH) or not os.path.exists(SCALER_PATH):
-    data = load_data()
-    scaler, mlp, dt = calculate_investment_and_reason(data)
+if not os.path.exists(SCALER_PATH) or not os.path.exists(MLP_PATH) or not os.path.exists(DT_PATH):
+    scaler, mlp, dt = save_models(load_data())
 else:
     scaler = joblib.load(SCALER_PATH)
     mlp = joblib.load(MLP_PATH)
@@ -151,12 +145,50 @@ else:
 @app.route('/home')
 def index():
     regions = load_data().to_dict(orient='records')
-    return render_template('new_index.html', regions=regions)
+    return render_template('index.html', regions=regions)
 
 
-@app.route('/predict', methods=['POST'])
+@app.route('/report')
+def report():
+    regions = load_data().to_dict(orient='records')
+
+    # Создаем новый workbook и активный worksheet
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Отчёт'
+
+    # Заполняем заголовки
+    headers = ['Название субъекта', 'Привлекательность', 'Причина']
+    ws.append(headers)
+
+    for region in regions:
+        ws.append([region['name'], region['result'], region['reason']])
+
+    file_stream = BytesIO()
+    wb.save(file_stream)
+    file_stream.seek(0)
+
+    return send_file(file_stream, as_attachment=True, download_name='report.xlsx',
+                     mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+
+@app.route('/predict')
 def predict():
-    return 'hello predict'
+    return render_template('predict.html')
+
+
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    data = request.json
+    features = np.array([[data['unemployment'], data['employment'], data['potential_labor_force'], data['salary'],
+                          data['education_school'], data['education_high'], data['crimes'], data['life_quality'],
+                          data['house_afford'], data['vrp_2023'], data['population']]])
+    features_scaled = scaler.transform(features)
+
+    result_class = mlp.predict(features_scaled)[0]
+    reason = explain_prediction(data, result_class, dt, scaler, features)
+
+    return jsonify({"class": result_class, "reason": reason})
 
 
 if __name__ == '__main__':

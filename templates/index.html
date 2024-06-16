@@ -2,41 +2,14 @@
 
 {% block title %}Инвестиционная привлекательность регионов{% endblock %}
 {% block body %}
-<div id="tooltip"></div>
-<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" x="0px" y="0px" viewBox="0 0 1000 600" xml:space="preserve" xmlns:xml="http://www.w3.org/XML/1998/namespace">
+<div class="container-lg">
+    <div id="tooltip" style="width: 300px"></div>
+    <svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny" x="0px" y="0px" viewBox="0 0 1000 600" xml:space="preserve" xmlns:xml="http://www.w3.org/XML/1998/namespace">
     {% for region in regions %}
         <path d="{{ region.polygon }}" data-title="{{ region.name }}" data-result="{{ region.result }}" data-reason="{{ region.reason }}"></path>
     {% endfor %}
 </svg>
+</div>
 <script src="https://d3js.org/d3.v6.min.js"></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const svg = d3.select("svg");
-        const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([7, 1]);
-
-        svg.selectAll("path")
-            .attr("fill", function() {
-                const result = d3.select(this).attr("data-result");
-                return colorScale(result);
-            })
-            .on("mouseover", function(event) {
-                console.log("mouse over");
-                const region = d3.select(this);
-
-                d3.select("#tooltip")
-                    .style("display", "block")
-                    .html(`<strong>${region.attr("data-title")}</strong><br>Класс: ${region.attr("data-result")}<br>Причина: ${region.attr("data-reason")}`);
-            })
-            .on("mousemove", function(event) {
-                console.log("mouse move");
-                d3.select("#tooltip")
-                    .style("left", (event.pageX + 10) + "px")
-                    .style("top", (event.pageY + 10) + "px");
-            })
-            .on("mouseout", function() {
-                console.log("mouse out");
-                d3.select("#tooltip").style("display", "none");
-            });
-    });
-</script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
 {% endblock %}
