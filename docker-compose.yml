@@ -22,6 +22,8 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+      - ./fixtures/data.sql:/docker-entrypoint-initdb.d/data.sql
+    command: ["postgres", "-c", "log_statement=all"]
 
 volumes:
   pgdata:

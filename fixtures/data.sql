@@ -1,3 +1,6 @@
+CREATE DATABASE IF NOT EXISTS nir;
+\c nir;
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -14,7 +17,7 @@ COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
 SET default_tablespace = '';
 SET default_with_oids = false;
 
-CREATE TABLE public.region (
+CREATE TABLE IF NOT EXISTS public.region (
     id SERIAL PRIMARY KEY,
     name CHARACTER VARYING(255) NOT NULL,
     population FLOAT NOT NULL,
