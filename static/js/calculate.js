@@ -1,13 +1,11 @@
 document.addEventListener("DOMContentLoaded", function() {
     const calculateButton = document.getElementById("calculate");
-    const tooltip = document.getElementById("fill-fields-tooltip");
     const formFields = Array.from(document.querySelectorAll("#calculate-form input"));
 
     formFields.forEach(field => {
         field.addEventListener("input", function() {
             const allFilled = formFields.every(input => input.value.trim() !== "");
             calculateButton.disabled = !allFilled;
-            tooltip.style.display = allFilled ? 'none' : 'inline-block';
         });
     });
 
@@ -25,6 +23,8 @@ document.addEventListener("DOMContentLoaded", function() {
             vrp_2023: document.getElementById("vrp_2023").value,
             population: document.getElementById("population").value,
         };
+
+        console.log(data)
 
         fetch("/calculate", {
             method: "POST",

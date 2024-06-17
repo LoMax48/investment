@@ -25,30 +25,24 @@ DT_PATH = 'models/dt.pkl'
 SCALER_PATH = 'models/scaler.pkl'
 
 
-def load_data():
-    return pd.read_sql_table('region', engine).sort_values(by=['id'])
+def load_data(sort='id'):
+    return pd.read_sql_table('region', engine).sort_values(by=[sort])
 
 
 def save_models(df):
     years = np.array([2014, 2015, 2016, 2017, 2018, 2019]).reshape(-1, 1)
     vrp_columns = ['vrp_2014', 'vrp_2015', 'vrp_2016', 'vrp_2017', 'vrp_2018', 'vrp_2019']
 
-    # Создадим новый столбец для прогноза
     df['vrp_2023'] = np.nan
 
-    # Пройдёмся по каждому региону и сделаем прогноз
     for index, row in df.iterrows():
-        # Значения ВРП для данного региона
         vrp_values = row[vrp_columns].values.reshape(-1, 1)
 
-        # Обучение модели линейной регрессии
         regression_model = LinearRegression()
         regression_model.fit(years, vrp_values)
 
-        # Прогноз ВРП на 2023 год
         vrp_2023 = regression_model.predict(np.array([[2023]]))
 
-        # Запишем прогнозное значение в DataFrame
         df.at[index, 'vrp_2023'] = vrp_2023[0, 0] / df.at[index, 'population']
 
     x = df.drop(columns=['vrp_2014', 'vrp_2015', 'vrp_2016', 'vrp_2017', 'vrp_2018', 'vrp_2019', 'population',
@@ -56,7 +50,6 @@ def save_models(df):
 
     y = df['investment_msu'].apply(lambda x: 7 if x > 7 else x)
 
-    # Разделение данных на обучающие и тестовые наборы
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=48)
 
     standard_scaler = StandardScaler()
@@ -148,9 +141,13 @@ def index():
     return render_template('index.html', regions=regions)
 
 
-@app.route('/report')
-def report():
-    regions = load_data().to_dict(orient='records')
+@app.route('/report/<sort_by>')
+def report(sort_by):
+    valid_sort_fields = ['name', 'result']
+    if sort_by not in valid_sort_fields:
+        return "Invalid sort field", 400
+
+    regions = load_data(sort_by).to_dict(orient='records')
 
     # Создаем новый workbook и активный worksheet
     wb = openpyxl.Workbook()

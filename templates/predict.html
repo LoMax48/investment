@@ -3,7 +3,17 @@
 {% block title %}Расчёт по параметрам{% endblock %}
 {% block body %}
     <div class="container-lg">
-        <h1>Тестовый режим</h1>
+        <h1>Расчёт по параметрам</h1>
+        <p class="lead">
+            Добро пожаловать на страницу тестового режима оценки инвестиционной привлекательности регионов.
+            Здесь вы можете ввести различные экономические и социальные показатели, чтобы получить прогнозируемый класс инвестиционной
+            привлекательности региона - это может помочь в выявлении факторов, влияющих на их инвестиционную привлекательность.
+        </p>
+        <p class="lead">
+            После ввода всех необходимых данных, нажмите кнопку "Рассчитать", чтобы узнать прогнозируемый класс
+            инвестиционной привлекательности (1 - самый высокий, 7 - самый низкий) и причины, по которым регион получил данный класс.
+        </p>
+
         <form id="calculate-form">
             <div class="form-group">
                 <label for="unemployment">Показатель безработицы</label>
@@ -11,12 +21,12 @@
             </div>
 
             <div class="form-group">
-                <label for="employment">Уровень занятости</label>
+                <label for="employment">Показатель безработицы</label>
                 <input type="number" id="employment" name="employment" class="form-control">
             </div>
 
             <div class="form-group">
-                <label for="potential_labor_force">Потенциальная рабочая сила</label>
+                <label for="potential_labor_force">Потенциальная рабочая сила (тыс. чел.)</label>
                 <input type="number" id="potential_labor_force" name="potential_labor_force" class="form-control"><br>
             </div>
 
@@ -26,12 +36,12 @@
             </div>
 
             <div class="form-group">
-                <label for="education_school">Уровень образования в школе (от 1 до 100)</label>
+                <label for="education_school">Качество обучения в школе (от 1 до 100)</label>
                 <input type="number" id="education_school" name="education_school" min="1" max="100" class="form-control">
             </div>
 
             <div class="form-group">
-                <label for="education_high">Доля работников с высшим образованием</label>
+                <label for="education_high">Кол-во преступлений на 10 тыс. жителей</label>
                 <input type="number" id="education_high" name="education_high" class="form-control">
             </div>
 
@@ -46,8 +56,8 @@
             </div>
 
             <div class="form-group">
-                <label for="house_afford">Доступность жилья (от 1 до 100)</label>
-                <input type="number" id="house_afford" name="house_afford" min="1" max="100" class="form-control">
+                <label for="house_afford">Средняя стоимость квартиры площадью 60 кв. м</label>
+                <input type="number" id="house_afford" name="house_afford" class="form-control">
             </div>
 
             <div class="form-group">
@@ -56,19 +66,18 @@
             </div>
 
             <div class="form-group">
-                <label for="population">Население</label>
+                <label for="population">Численность населения</label>
                 <input type="number" id="population" name="population" class="form-control"><br>
             </div>
 
             <button type="button" id="calculate" class="btn btn-primary" disabled>Рассчитать</button>
-            <span id="fill-fields-tooltip">Заполните все поля</span>
         </form>
 
-        <div id="result" class="mt-20">
+        <div id="result">
             <h2>Результаты</h2>
             <p id="result-class"></p>
             <p id="result-reason"></p>
-        </div>
+        </div><br>
     </div>
     <script src="{{ url_for('static', filename='js/calculate.js') }}"></script>
 {% endblock %}
