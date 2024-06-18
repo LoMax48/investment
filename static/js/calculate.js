@@ -11,20 +11,17 @@ document.addEventListener("DOMContentLoaded", function() {
 
     calculateButton.addEventListener("click", function() {
         const data = {
-            unemployment: document.getElementById("unemployment").value,
-            employment: document.getElementById("employment").value,
-            potential_labor_force: document.getElementById("potential_labor_force").value,
-            salary: document.getElementById("salary").value,
-            education_school: document.getElementById("education_school").value,
-            education_high: document.getElementById("education_high").value,
-            crimes: document.getElementById("crimes").value,
-            life_quality: document.getElementById("life_quality").value,
-            house_afford: document.getElementById("house_afford").value,
-            vrp_2023: document.getElementById("vrp_2023").value,
-            population: document.getElementById("population").value,
+            unemployment: parseFloat(document.getElementById("unemployment").value),
+            employment: parseFloat(document.getElementById("employment").value),
+            potential_labor_force: parseFloat(document.getElementById("potential_labor_force").value),
+            salary: parseFloat(document.getElementById("salary").value),
+            education_school: parseFloat(document.getElementById("education_school").value),
+            education_high: parseFloat(document.getElementById("education_high").value),
+            crimes: parseFloat(document.getElementById("crimes").value),
+            life_quality: parseFloat(document.getElementById("life_quality").value),
+            house_afford: parseFloat(document.getElementById("house_afford").value),
+            vrp_2023: parseFloat(document.getElementById("vrp_2023").value) / parseFloat(document.getElementById("population").value),
         };
-
-        console.log(data)
 
         fetch("/calculate", {
             method: "POST",
@@ -36,7 +33,9 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(response => response.json())
         .then(result => {
             document.getElementById("result-class").innerText = `Класс: ${result.class}`;
-            document.getElementById("result-reason").innerText = `Причина: ${result.reason}`;
+            if (result.class != 1) {
+                document.getElementById("result-reason").innerText = `Рекомендации: ${result.reason}`;
+            }
         })
         .catch(error => console.error("Ошибка:", error));
     });

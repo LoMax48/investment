@@ -21,13 +21,13 @@
             </div>
 
             <div class="form-group">
-                <label for="employment">Показатель безработицы</label>
+                <label for="employment">Показатель занятости</label>
                 <input type="number" id="employment" name="employment" class="form-control">
             </div>
 
             <div class="form-group">
                 <label for="potential_labor_force">Потенциальная рабочая сила (тыс. чел.)</label>
-                <input type="number" id="potential_labor_force" name="potential_labor_force" class="form-control"><br>
+                <input type="number" id="potential_labor_force" name="potential_labor_force" class="form-control">
             </div>
 
             <div class="form-group">
@@ -71,12 +71,12 @@
             </div>
 
             <button type="button" id="calculate" class="btn btn-primary" disabled>Рассчитать</button>
-        </form>
+        </form><br>
 
         <div id="result">
             <h2>Результаты</h2>
-            <p id="result-class"></p>
-            <p id="result-reason"></p>
+            <p class="lead" id="result-class"></p>
+            <p class="lead" id="result-reason"></p>
         </div><br>
     </div>
     <script src="{{ url_for('static', filename='js/calculate.js') }}"></script>

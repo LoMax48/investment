@@ -9,9 +9,15 @@ document.addEventListener("DOMContentLoaded", function() {
         .on("mouseover", function(event) {
             const region = d3.select(this);
 
-            d3.select("#tooltip")
-                .style("display", "block")
-                .html(`<strong>${region.attr("data-title")}</strong><br>Класс: ${region.attr("data-result")}<br>Причина: ${region.attr("data-reason")}`);
+            if (region.attr("data-result") == 1) {
+                d3.select("#tooltip")
+                    .style("display", "block")
+                    .html(`<strong>${region.attr("data-title")}</strong><br>Класс: ${region.attr("data-result")}`);
+            } else {
+                d3.select("#tooltip")
+                    .style("display", "block")
+                    .html(`<strong>${region.attr("data-title")}</strong><br>Класс: ${region.attr("data-result")}<br>${region.attr("data-reason")}`);
+            }
         })
         .on("mousemove", function(event) {
             d3.select("#tooltip")

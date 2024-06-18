@@ -25,8 +25,8 @@ DT_PATH = 'models/dt.pkl'
 SCALER_PATH = 'models/scaler.pkl'
 
 
-def load_data(sort='id'):
-    return pd.read_sql_table('region', engine).sort_values(by=[sort])
+def load_data(sort_by='id'):
+    return pd.read_sql_table('region', engine).sort_values(by=[sort_by])
 
 
 def save_models(df):
@@ -63,10 +63,11 @@ def save_models(df):
     df['result'] = mlp_classifier.predict(standard_scaler.transform(x))
     print(f"Accuracy for mlp: {accuracy_mlp:.2f}")
 
+    x_scaled = standard_scaler.fit_transform(x)
     decision_tree = DecisionTreeClassifier(random_state=48)
-    decision_tree.fit(x_train_scaled, y_train)
-    y_pred_dt = decision_tree.predict(x_test_scaled)
-    accuracy_dt = accuracy_score(y_test, y_pred_dt)
+    decision_tree.fit(x_scaled, y)
+    y_pred_dt = decision_tree.predict(standard_scaler.transform(x))
+    accuracy_dt = accuracy_score(y, y_pred_dt)
     df['result_dt'] = decision_tree.predict(standard_scaler.transform(x))
     print(f"Accuracy for decision tree: {accuracy_dt:.2f}")
 
@@ -88,40 +89,48 @@ def save_models(df):
 def explain_prediction(features, current_class, decision_tree, standard_scaler, feature_names):
     features_scaled = standard_scaler.transform([features])
     path = decision_tree.decision_path(features_scaled)
-    feature = decision_tree.tree_.feature
-    threshold = decision_tree.tree_.threshold
+    tree = decision_tree.tree_
+    feature = tree.feature
+    threshold = tree.threshold
 
     explanation = []
 
     for node_id in path.indices:
+        # Проверяем, не является ли узел листом
         if feature[node_id] != -2:
             feature_name = feature_names[feature[node_id]]
             threshold_value = threshold[node_id]
             feature_value = features[feature[node_id]]
 
+            # Проверка, к какому классу приведет изменение признака
             if feature_value <= threshold_value:
-                if decision_tree.classes_[np.argmax(decision_tree.tree_.value[node_id])] > current_class - 1:
-                    explanation.append(f"повышение {process_feature_name(feature_name)}")
+                next_node = tree.children_left[node_id]
             else:
-                if decision_tree.classes_[np.argmax(decision_tree.tree_.value[node_id])] > current_class - 1:
-                    explanation.append(f"понижение {process_feature_name(feature_name)}")
+                next_node = tree.children_right[node_id]
 
-    return 'Требуется ' + ', '.join(explanation)
+            next_class = np.argmax(tree.value[next_node])
+
+            if next_class == current_class - 1:
+                explanation.append(f"{process_feature_name(feature_name)}")
+
+    if not explanation:
+        return 'Изменение факторов не приведёт к улучшению класса'
+
+    return 'Требуется ' + ', '.join(list(dict.fromkeys(explanation)))
 
 
 def process_feature_name(feature_name):
     return {
-        'unemployment': 'уровня безработицы',
-        'employment': 'уровня занятости',
-        'potential_labor_force': 'потенциальной рабочей силы',
-        'salary': 'средней заработной платы',
-        'education_school': 'уровня школьного образования',
-        'education_high': 'доли работников с высшим образованием',
-        'crimes': 'уровня преступности',
-        'life_quality': 'качества жизни',
-        'house_afford': 'доступности жилья',
-        'vrp_2023': 'внутреннего регионального продукта',
-        'population': 'населения'
+        'unemployment': 'понижение уровня безработицы',
+        'employment': 'повышение уровня занятости',
+        'potential_labor_force': 'повышение потенциальной рабочей силы',
+        'salary': 'повышение средней заработной платы',
+        'education_school': ' повышение уровня школьного образования',
+        'education_high': 'повышение доли работников с высшим образованием',
+        'crimes': 'понижение уровня преступности',
+        'life_quality': 'повышение качества жизни',
+        'house_afford': 'повышение доступности жилья',
+        'vrp_2023': 'повышение внутреннего регионального продукта',
     }[feature_name]
 
 
@@ -137,15 +146,17 @@ else:
 @app.route('/')
 @app.route('/home')
 def index():
-    regions = load_data().to_dict(orient='records')
-    return render_template('index.html', regions=regions)
+    regions = load_data()
+    regions['result'] = regions['result'].astype(int)
+
+    return render_template('index.html', regions=regions.to_dict(orient='records'))
 
 
 @app.route('/report/<sort_by>')
 def report(sort_by):
     valid_sort_fields = ['name', 'result']
     if sort_by not in valid_sort_fields:
-        return "Invalid sort field", 400
+        return 'Invalid sort field', 400
 
     regions = load_data(sort_by).to_dict(orient='records')
 
@@ -177,15 +188,14 @@ def predict():
 @app.route('/calculate', methods=['POST'])
 def calculate():
     data = request.json
-    features = np.array([[data['unemployment'], data['employment'], data['potential_labor_force'], data['salary'],
-                          data['education_school'], data['education_high'], data['crimes'], data['life_quality'],
-                          data['house_afford'], data['vrp_2023'], data['population']]])
-    features_scaled = scaler.transform(features)
 
-    result_class = mlp.predict(features_scaled)[0]
-    reason = explain_prediction(data, result_class, dt, scaler, features)
+    df = pd.DataFrame([data])
+    x_scaled = scaler.transform(df).astype(np.float32)
 
-    return jsonify({"class": result_class, "reason": reason})
+    result_class = mlp.predict(x_scaled)[0]
+    reason = explain_prediction(df.iloc[0], result_class, dt, scaler, df.columns)
+
+    return jsonify({'class': int(result_class), 'reason': reason})
 
 
 if __name__ == '__main__':
